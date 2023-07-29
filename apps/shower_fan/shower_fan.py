@@ -114,7 +114,7 @@ class ShowerFan(hass.Hass):
         self.fan_timeout_handle = self.run_in(self.on_timeout, duration)
 
     def end_timeout(self):
-        if self.fan_timeout_handle != None:
+        if self.fan_timeout_handle is not None:
             # already on with delay
             self.cancel_timer(self.fan_timeout_handle)
 

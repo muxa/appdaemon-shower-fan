@@ -1,14 +1,13 @@
+import sys
 import pytest
 import pytest_mock
 from unittest import mock
 from appdaemon_testing.pytest import automation_fixture
 import appdaemon.plugins.hass.hassapi as hass
 
-import sys
-
 sys.path.append("apps/shower_fan")
 
-from shower_fan import ShowerFan, TimeRange
+from shower_fan import ShowerFan
 
 HASS_LISTEN_STATE = "listen_state"
 HASS_RUN_DAILY = "run_daily"
@@ -411,6 +410,7 @@ def test_humidity_sensor_within_threshold_does_not_trigger(
 
     trigger_spy.assert_not_called()
 
+
 def test_quite_period_schedule_initialised(hass_driver, shower_fan_app: ShowerFan):
     with hass_driver.setup():
         hass_driver.set_state(FAN, "off")
@@ -452,9 +452,8 @@ def test_quite_period_schedule_triggers_transition(
         ]
     )
 
-def test_extraction_starts_timeout(
-    hass_driver, shower_fan_app: ShowerFan
-):
+
+def test_extraction_starts_timeout(hass_driver, shower_fan_app: ShowerFan):
     with hass_driver.setup():
         hass_driver.set_state(FAN, "off")
 
@@ -463,6 +462,7 @@ def test_extraction_starts_timeout(
 
     run_in_mock = hass_driver.get_mock(HASS_RUN_IN)
     run_in_mock.assert_called_once_with(shower_fan_app.on_timeout, 300)
+
 
 def test_quiet_extraction_starts_timeout(
     hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
