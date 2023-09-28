@@ -7,7 +7,14 @@ import appdaemon.plugins.hass.hassapi as hass
 
 sys.path.append("apps/shower_fan")
 
-from shower_fan import ShowerFan
+from shower_fan import (
+    ShowerFan,
+    CONFIG_REFERENCE_HUMIDITY_SENSOR,
+    CONFIG_HUMIDITY_SENSOR,
+    CONFIG_QUIET_SWITCH,
+    CONFIG_FAN,
+    CONFIG_QUIET_TIME,
+)
 
 HASS_LISTEN_STATE = "listen_state"
 HASS_RUN_DAILY = "run_daily"
@@ -27,11 +34,11 @@ QUIET_SWITCH = "switch.quiet_time"
 @automation_fixture(
     ShowerFan,
     args={
-        "fan_entity_id": FAN,
-        "reference_humidity_sensor": REFERENCE_HUMIDITY_SENSOR,
-        "humidity_sensor": HUMIDITY_SENSOR,
-        "quiet_time": {"from": QUIET_TIME_FROM, "to": QUIET_TIME_TO},
-        "quiet_switch_entity_id": QUIET_SWITCH,
+        CONFIG_FAN: FAN,
+        CONFIG_REFERENCE_HUMIDITY_SENSOR: REFERENCE_HUMIDITY_SENSOR,
+        CONFIG_HUMIDITY_SENSOR: HUMIDITY_SENSOR,
+        CONFIG_QUIET_TIME: {"from": QUIET_TIME_FROM, "to": QUIET_TIME_TO},
+        CONFIG_QUIET_SWITCH: QUIET_SWITCH,
     },
     initialize=False,
 )

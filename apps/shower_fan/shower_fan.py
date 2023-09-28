@@ -6,6 +6,15 @@ TOWEL_RAIL_DELAYED_OFF_HOURS = 4
 HUMIDITY_RELATIVE_HIGH = 20
 HUMIDITY_RELATIVE_LOW = 10
 
+CONFIG_REFERENCE_HUMIDITY_SENSOR = "reference_humidity_sensor"
+CONFIG_HUMIDITY_SENSOR = "humidity_sensor"
+CONFIG_HUMIDITY_RELATIVE_HIGH = "humidity_relative_high"
+CONFIG_HUMIDITY_RELATIVE_LOW = "humidity_relative_low"
+CONFIG_QUIET_SWITCH = "quiet_switch"
+CONFIG_FAN = "fan"
+CONFIG_FAN_OFF_DELAY_MINUTES = "fan_off_delay_minutes"
+CONFIG_QUIET_TIME = "quiet_time"
+
 
 class ShowerFan(hass.Hass):
     # states
@@ -26,25 +35,26 @@ class ShowerFan(hass.Hass):
     END_QUIET = "end quiet"
 
     def initialize(self):
-        self.reference_humidity_sensor = self.args.get("reference_humidity_sensor")
-        self.humidity_sensor = self.args.get("humidity_sensor")
+        self.reference_humidity_sensor = self.args.get(CONFIG_REFERENCE_HUMIDITY_SENSOR)
+        self.humidity_sensor = self.args.get(CONFIG_HUMIDITY_SENSOR)
         self.humidity_relative_high = float(
-            self.args.get("humidity_relative_high", HUMIDITY_RELATIVE_HIGH)
+            self.args.get(CONFIG_HUMIDITY_RELATIVE_HIGH, HUMIDITY_RELATIVE_HIGH)
         )
         self.humidity_relative_low = float(
-            self.args.get("humidity_relative_low", HUMIDITY_RELATIVE_LOW)
+            self.args.get(CONFIG_HUMIDITY_RELATIVE_LOW, HUMIDITY_RELATIVE_LOW)
         )
 
-        self.quiet_switch_entity_id = self.args.get("quiet_switch_entity_id")
-        self.listen_state(self._on_quiet_switch_state, self.quiet_switch_entity_id)
+        self.quiet_switch = self.args.get(CONFIG_QUIET_SWITCH)
+        self.log(f"Quiet switch: {self.quiet_switch}", level=DEBUG)
+        self.listen_state(self._on_quiet_switch_state, self.quiet_switch)
 
         self.quiet_time = TimeRange(self, "23:00:00", "06:00:00")
 
-        if "quiet_time" in self.args:
-            self.quiet_time.time_from = self.args["quiet_time"].get(
+        if CONFIG_QUIET_TIME in self.args:
+            self.quiet_time.time_from = self.args[CONFIG_QUIET_TIME].get(
                 "from", self.quiet_time.time_from
             )
-            self.quiet_time.time_to = self.args["quiet_time"].get(
+            self.quiet_time.time_to = self.args[CONFIG_QUIET_TIME].get(
                 "to", self.quiet_time.time_to
             )
             self.run_daily(
@@ -69,19 +79,19 @@ class ShowerFan(hass.Hass):
             self.listen_state(self._log_entity_state, self.humidity_sensor)
             self.listen_state(self._on_humidity_state, self.humidity_sensor)
 
-        self.log(f'Extraction fan: {self.args.get("fan_entity_id")}', level=DEBUG)
-
-        self.fan_entity_id = self.args.get("fan_entity_id")
+        self.fan = self.args.get(CONFIG_FAN)
+        self.log(f"Extraction fan: {self.fan}", level=DEBUG)
         self.fan_off_delay_seconds = (
-            float(self.args.get("fan_off_delay_minutes", FAN_DELAYED_OFF_MINUTES)) * 60
+            float(self.args.get(CONFIG_FAN_OFF_DELAY_MINUTES, FAN_DELAYED_OFF_MINUTES))
+            * 60
         )
         self.fan_timeout_handle = None
         self.current_state = ShowerFan.INIT
 
-        self.listen_state(self._on_fan_state, self.fan_entity_id)
+        self.listen_state(self._on_fan_state, self.fan)
 
         self.log(
-            f"{self.fan_entity_id} configured with {self.fan_off_delay_seconds} off delay",
+            f"{self.fan} configured with {self.fan_off_delay_seconds} off delay",
             level=DEBUG,
         )
 
@@ -91,8 +101,7 @@ class ShowerFan(hass.Hass):
 
     def restore_state(self):
         is_quiet_period = (
-            self.quiet_time.now_is_within()
-            or self.get_state(self.quiet_switch_entity_id) == "on"
+            self.quiet_time.now_is_within() or self.get_state(self.quiet_switch) == "on"
         )
 
         if is_quiet_period:
@@ -106,14 +115,14 @@ class ShowerFan(hass.Hass):
 
     def turn_on(self):
         if not self.is_on():
-            self.call_service("homeassistant/turn_on", entity_id=self.fan_entity_id)
+            self.call_service("homeassistant/turn_on", entity_id=self.fan)
 
     def turn_off(self):
         if self.is_on():
-            self.call_service("homeassistant/turn_off", entity_id=self.fan_entity_id)
+            self.call_service("homeassistant/turn_off", entity_id=self.fan)
 
     def is_on(self):
-        return self.get_state(self.fan_entity_id) == "on"
+        return self.get_state(self.fan) == "on"
 
     def begin_timeout(self, duration):
         self.end_timeout()
