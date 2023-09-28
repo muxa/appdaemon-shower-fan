@@ -1,16 +1,14 @@
 # Shower Fan for AppDaemon
 
-Automates extraction fan for shower/bathrooms to reduce humidity. 
+Automates extraction fan for shower/bathrooms to reduce humidity.
 
 Features:
 
 - Configurable timeout for manually switched on fan
-- Automatic extraction based on hubidity
-- Quite period (to avoid fan turning on automatically at night)
+- Automatic extraction based on humidity
+- Quite mode with a switch (to avoid fan turning on automatically at night)
 
 ## Arguments
-
-
 
 ## Example
 
@@ -22,9 +20,6 @@ master_bathroom_fan:
   humidity_sensor: sensor.master_bathroom_climate_humidity
   humidity_relative_high: 30
   humidity_relative_low: 10
-  quiet_time:
-    from: "21:00:00"
-    to: "07:00:00"
   quiet_switch: switch.quiet_time
   fan: fan.master_bathroom_fan
   fan_off_delay_minutes: 10
@@ -36,7 +31,7 @@ master_bathroom_fan:
 ```mermaid
 stateDiagram-v2
   direction LR
-  
+
   [*] --> INIT
   INIT --> EXTRACTION: TURNED_ON
   INIT --> OFF: TURNED_OFF

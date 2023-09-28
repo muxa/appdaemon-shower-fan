@@ -1,10 +1,9 @@
 import appdaemon.plugins.hass.hassapi as hass
 
 DEBUG = "DEBUG"
-FAN_DELAYED_OFF_MINUTES = 5
-TOWEL_RAIL_DELAYED_OFF_HOURS = 4
-HUMIDITY_RELATIVE_HIGH = 20
-HUMIDITY_RELATIVE_LOW = 10
+DEFAULT_FAN_DELAYED_OFF_MINUTES = 5
+DEFAULT_HUMIDITY_RELATIVE_HIGH = 20
+DEFAULT_HUMIDITY_RELATIVE_LOW = 10
 
 CONFIG_REFERENCE_HUMIDITY_SENSOR = "reference_humidity_sensor"
 CONFIG_HUMIDITY_SENSOR = "humidity_sensor"
@@ -13,7 +12,6 @@ CONFIG_HUMIDITY_RELATIVE_LOW = "humidity_relative_low"
 CONFIG_QUIET_SWITCH = "quiet_switch"
 CONFIG_FAN = "fan"
 CONFIG_FAN_OFF_DELAY_MINUTES = "fan_off_delay_minutes"
-CONFIG_QUIET_TIME = "quiet_time"
 
 
 class ShowerFan(hass.Hass):
@@ -38,35 +36,15 @@ class ShowerFan(hass.Hass):
         self.reference_humidity_sensor = self.args.get(CONFIG_REFERENCE_HUMIDITY_SENSOR)
         self.humidity_sensor = self.args.get(CONFIG_HUMIDITY_SENSOR)
         self.humidity_relative_high = float(
-            self.args.get(CONFIG_HUMIDITY_RELATIVE_HIGH, HUMIDITY_RELATIVE_HIGH)
+            self.args.get(CONFIG_HUMIDITY_RELATIVE_HIGH, DEFAULT_HUMIDITY_RELATIVE_HIGH)
         )
         self.humidity_relative_low = float(
-            self.args.get(CONFIG_HUMIDITY_RELATIVE_LOW, HUMIDITY_RELATIVE_LOW)
+            self.args.get(CONFIG_HUMIDITY_RELATIVE_LOW, DEFAULT_HUMIDITY_RELATIVE_LOW)
         )
 
         self.quiet_switch = self.args.get(CONFIG_QUIET_SWITCH)
         self.log(f"Quiet switch: {self.quiet_switch}", level=DEBUG)
         self.listen_state(self._on_quiet_switch_state, self.quiet_switch)
-
-        self.quiet_time = TimeRange(self, "23:00:00", "06:00:00")
-
-        if CONFIG_QUIET_TIME in self.args:
-            self.quiet_time.time_from = self.args[CONFIG_QUIET_TIME].get(
-                "from", self.quiet_time.time_from
-            )
-            self.quiet_time.time_to = self.args[CONFIG_QUIET_TIME].get(
-                "to", self.quiet_time.time_to
-            )
-            self.run_daily(
-                self.on_quite_time_schedule,
-                self.quiet_time.time_from,
-                trigger=ShowerFan.BEGIN_QUIET,
-            )
-            self.run_daily(
-                self.on_quite_time_schedule,
-                self.quiet_time.time_to,
-                trigger=ShowerFan.END_QUIET,
-            )
 
         if self.reference_humidity_sensor:
             self.log(
@@ -82,7 +60,11 @@ class ShowerFan(hass.Hass):
         self.fan = self.args.get(CONFIG_FAN)
         self.log(f"Extraction fan: {self.fan}", level=DEBUG)
         self.fan_off_delay_seconds = (
-            float(self.args.get(CONFIG_FAN_OFF_DELAY_MINUTES, FAN_DELAYED_OFF_MINUTES))
+            float(
+                self.args.get(
+                    CONFIG_FAN_OFF_DELAY_MINUTES, DEFAULT_FAN_DELAYED_OFF_MINUTES
+                )
+            )
             * 60
         )
         self.fan_timeout_handle = None
@@ -100,9 +82,7 @@ class ShowerFan(hass.Hass):
     # commands -----------------
 
     def restore_state(self):
-        is_quiet_period = (
-            self.quiet_time.now_is_within() or self.get_state(self.quiet_switch) == "on"
-        )
+        is_quiet_period = self.get_state(self.quiet_switch) == "on"
 
         if is_quiet_period:
             self.trigger(ShowerFan.BEGIN_QUIET)
@@ -298,19 +278,3 @@ class ShowerFan(hass.Hass):
     def on_timeout(self, kwargs):
         self.fan_timeout_handle = None
         self.trigger(ShowerFan.TIMEOUT)
-
-    # schedule callbacks ----------------
-
-    def on_quite_time_schedule(self, kwargs):
-        self.log(f"Quiet time schedule ran {kwargs}", level=DEBUG)
-        self.trigger(kwargs.get("trigger"))
-
-
-class TimeRange:
-    def __init__(self, hass: hass.Hass, time_from, time_to):
-        self.hass = hass
-        self.time_from = time_from
-        self.time_to = time_to
-
-    def now_is_within(self):
-        return self.hass.now_is_between(self.time_from, self.time_to)
