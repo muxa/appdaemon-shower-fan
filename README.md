@@ -25,6 +25,7 @@ master_bathroom_fan:
   quiet_time:
     from: "21:00:00"
     to: "07:00:00"
+  quiet_switch_entity_id: switch.quiet_time
   fan_entity_id: fan.master_bathroom_fan
   fan_off_delay_minutes: 10
   log_level: INFO

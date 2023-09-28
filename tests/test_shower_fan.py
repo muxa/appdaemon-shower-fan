@@ -21,6 +21,7 @@ REFERENCE_HUMIDITY_SENSOR = "sensor.living_room_humidity"
 HUMIDITY_SENSOR = "sensor.master_bathroom_climate_humidity"
 QUIET_TIME_FROM = "21:00:00"
 QUIET_TIME_TO = "07:00:00"
+QUIET_SWITCH = "switch.quiet_time"
 
 
 @automation_fixture(
@@ -30,6 +31,7 @@ QUIET_TIME_TO = "07:00:00"
         "reference_humidity_sensor": REFERENCE_HUMIDITY_SENSOR,
         "humidity_sensor": HUMIDITY_SENSOR,
         "quiet_time": {"from": QUIET_TIME_FROM, "to": QUIET_TIME_TO},
+        "quiet_switch_entity_id": QUIET_SWITCH,
     },
     initialize=False,
 )
@@ -158,6 +160,50 @@ def test_restore_state_triggers_start_quiet_period_and_turned_on_when_within_qui
     now_is_between_mock = mock.Mock()
     setattr(hass.Hass, "now_is_between", now_is_between_mock)
     now_is_between_mock.return_value = True
+
+    trigger_spy = mocker.spy(shower_fan_app, "trigger")
+
+    shower_fan_app.initialize()
+
+    trigger_spy.assert_has_calls(
+        [
+            mock.call(ShowerFan.START_QUIET_PERIOD),
+            mock.call(ShowerFan.TURNED_ON),
+        ]
+    )
+
+
+def test_restore_state_triggers_start_quiet_period_when_quiet_period_switch_is_on(
+    hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
+):
+    with hass_driver.setup():
+        hass_driver.set_state(QUIET_SWITCH, "on")
+
+    trigger_spy = mocker.spy(shower_fan_app, "trigger")
+
+    now_is_between_mock = mock.Mock()
+    setattr(hass.Hass, "now_is_between", now_is_between_mock)
+    now_is_between_mock.return_value = False
+
+    shower_fan_app.initialize()
+
+    trigger_spy.assert_has_calls(
+        [
+            mock.call(ShowerFan.START_QUIET_PERIOD),
+        ]
+    )
+
+
+def test_restore_state_triggers_start_quiet_period_and_turned_on_when_quiet_period_switch_is_on_and_fan_is_on(
+    hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
+):
+    with hass_driver.setup():
+        hass_driver.set_state(QUIET_SWITCH, "on")
+        hass_driver.set_state(FAN, "on")
+
+    now_is_between_mock = mock.Mock()
+    setattr(hass.Hass, "now_is_between", now_is_between_mock)
+    now_is_between_mock.return_value = False
 
     trigger_spy = mocker.spy(shower_fan_app, "trigger")
 
@@ -449,6 +495,42 @@ def test_quite_period_schedule_triggers_transition(
     trigger_spy.assert_has_calls(
         [
             mock.call(ShowerFan.START_QUIET_PERIOD),
+        ]
+    )
+
+
+def test_quite_switch_on_triggers_start_quiet_period_transition(
+    hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
+):
+    with hass_driver.setup():
+        hass_driver.set_state(QUIET_SWITCH, "off")
+
+    shower_fan_app.initialize()
+
+    trigger_spy = mocker.spy(shower_fan_app, "trigger")
+    hass_driver.set_state(QUIET_SWITCH, "on")
+
+    trigger_spy.assert_has_calls(
+        [
+            mock.call(ShowerFan.START_QUIET_PERIOD),
+        ]
+    )
+
+
+def test_quite_switch_off_triggers_end_quiet_period_transition(
+    hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
+):
+    with hass_driver.setup():
+        hass_driver.set_state(QUIET_SWITCH, "on")
+
+    shower_fan_app.initialize()
+
+    trigger_spy = mocker.spy(shower_fan_app, "trigger")
+    hass_driver.set_state(QUIET_SWITCH, "off")
+
+    trigger_spy.assert_has_calls(
+        [
+            mock.call(ShowerFan.END_QUIET_PERIOD),
         ]
     )
 

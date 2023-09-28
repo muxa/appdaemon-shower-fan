@@ -35,6 +35,9 @@ class ShowerFan(hass.Hass):
             self.args.get("humidity_relative_low", HUMIDITY_RELATIVE_LOW)
         )
 
+        self.quiet_switch_entity_id = self.args.get("quiet_switch_entity_id")
+        self.listen_state(self._on_quiet_switch_state, self.quiet_switch_entity_id)
+
         self.quiet_time = TimeRange(self, "23:00:00", "06:00:00")
 
         if "quiet_time" in self.args:
@@ -87,12 +90,15 @@ class ShowerFan(hass.Hass):
     # commands -----------------
 
     def restore_state(self):
-        if self.quiet_time.now_is_within():
+        is_quiet_period = (
+            self.quiet_time.now_is_within()
+            or self.get_state(self.quiet_switch_entity_id) == "on"
+        )
+
+        if is_quiet_period:
+            self.trigger(ShowerFan.START_QUIET_PERIOD)
             if self.is_on():
-                self.trigger(ShowerFan.START_QUIET_PERIOD)
                 self.trigger(ShowerFan.TURNED_ON)
-            else:
-                self.trigger(ShowerFan.START_QUIET_PERIOD)
         elif self.is_on():
             self.trigger(ShowerFan.TURNED_ON)
         else:
@@ -249,6 +255,20 @@ class ShowerFan(hass.Hass):
                 self.trigger(ShowerFan.HIGH_HUMIDITY)
             elif humidity < (reference_humidity + self.humidity_relative_low):
                 self.trigger(ShowerFan.LOW_HUMIDITY)
+
+    def _on_quiet_switch_state(self, entity, attribute, old, new, kwargs):
+        self.log(
+            f"{self.name} {attribute} changed from {old} to {new}. {kwargs}",
+            level=DEBUG,
+        )
+
+        if old == "unavailable" or new == "unavailable":
+            return
+
+        if new == "on":
+            self.trigger(ShowerFan.START_QUIET_PERIOD)
+        elif new == "off":
+            self.trigger(ShowerFan.END_QUIET_PERIOD)
 
     def _on_fan_state(self, entity, attribute, old, new, kwargs):
         self.log(
