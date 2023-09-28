@@ -58,7 +58,7 @@ def test_registers_start_of_quiet_time(hass_driver, shower_fan_app: ShowerFan):
             mock.call(
                 shower_fan_app.on_quite_time_schedule,
                 QUIET_TIME_FROM,
-                trigger=ShowerFan.START_QUIET_PERIOD,
+                trigger=ShowerFan.BEGIN_QUIET,
             ),
         ]
     )
@@ -72,7 +72,7 @@ def test_registers_end_of_quiet_time(hass_driver, shower_fan_app: ShowerFan):
             mock.call(
                 shower_fan_app.on_quite_time_schedule,
                 QUIET_TIME_TO,
-                trigger=ShowerFan.END_QUIET_PERIOD,
+                trigger=ShowerFan.END_QUIET,
             ),
         ]
     )
@@ -130,7 +130,7 @@ def test_restore_state_triggers_turned_on_when_fan_is_on_and_not_quiet(
     )
 
 
-def test_restore_state_triggers_start_quiet_period_when_within_quiet_time(
+def test_restore_state_triggers_begin_quiet_when_within_quiet_time(
     hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
 ):
     with hass_driver.setup():
@@ -146,12 +146,12 @@ def test_restore_state_triggers_start_quiet_period_when_within_quiet_time(
 
     trigger_spy.assert_has_calls(
         [
-            mock.call(ShowerFan.START_QUIET_PERIOD),
+            mock.call(ShowerFan.BEGIN_QUIET),
         ]
     )
 
 
-def test_restore_state_triggers_start_quiet_period_and_turned_on_when_within_quiet_time_and_fan_is_on(
+def test_restore_state_triggers_being_quiet_and_turned_on_when_within_quiet_time_and_fan_is_on(
     hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
 ):
     with hass_driver.setup():
@@ -167,13 +167,13 @@ def test_restore_state_triggers_start_quiet_period_and_turned_on_when_within_qui
 
     trigger_spy.assert_has_calls(
         [
-            mock.call(ShowerFan.START_QUIET_PERIOD),
+            mock.call(ShowerFan.BEGIN_QUIET),
             mock.call(ShowerFan.TURNED_ON),
         ]
     )
 
 
-def test_restore_state_triggers_start_quiet_period_when_quiet_period_switch_is_on(
+def test_restore_state_triggers_begin_quiet_when_quiet_period_switch_is_on(
     hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
 ):
     with hass_driver.setup():
@@ -189,12 +189,12 @@ def test_restore_state_triggers_start_quiet_period_when_quiet_period_switch_is_o
 
     trigger_spy.assert_has_calls(
         [
-            mock.call(ShowerFan.START_QUIET_PERIOD),
+            mock.call(ShowerFan.BEGIN_QUIET),
         ]
     )
 
 
-def test_restore_state_triggers_start_quiet_period_and_turned_on_when_quiet_period_switch_is_on_and_fan_is_on(
+def test_restore_state_triggers_begin_quiet_and_turned_on_when_quiet_period_switch_is_on_and_fan_is_on(
     hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
 ):
     with hass_driver.setup():
@@ -211,7 +211,7 @@ def test_restore_state_triggers_start_quiet_period_and_turned_on_when_quiet_peri
 
     trigger_spy.assert_has_calls(
         [
-            mock.call(ShowerFan.START_QUIET_PERIOD),
+            mock.call(ShowerFan.BEGIN_QUIET),
             mock.call(ShowerFan.TURNED_ON),
         ]
     )
@@ -221,42 +221,42 @@ def test_restore_state_triggers_start_quiet_period_and_turned_on_when_quiet_peri
     "initial_state,input,target_state",
     [
         (ShowerFan.INIT, ShowerFan.TURNED_ON, ShowerFan.EXTRACTION),
-        (ShowerFan.INIT, ShowerFan.START_QUIET_PERIOD, ShowerFan.QUIET),
+        (ShowerFan.INIT, ShowerFan.BEGIN_QUIET, ShowerFan.QUIET),
         (ShowerFan.INIT, ShowerFan.TURNED_OFF, ShowerFan.OFF),
         (ShowerFan.INIT, ShowerFan.HIGH_HUMIDITY, ShowerFan.INIT),
         (ShowerFan.INIT, ShowerFan.TIMEOUT, ShowerFan.INIT),
         (ShowerFan.INIT, ShowerFan.LOW_HUMIDITY, ShowerFan.INIT),
         (ShowerFan.OFF, ShowerFan.TURNED_ON, ShowerFan.EXTRACTION),
         (ShowerFan.OFF, ShowerFan.HIGH_HUMIDITY, ShowerFan.DRYING),
-        (ShowerFan.OFF, ShowerFan.START_QUIET_PERIOD, ShowerFan.QUIET),
+        (ShowerFan.OFF, ShowerFan.BEGIN_QUIET, ShowerFan.QUIET),
         (ShowerFan.OFF, ShowerFan.TURNED_OFF, ShowerFan.OFF),
         (ShowerFan.OFF, ShowerFan.TIMEOUT, ShowerFan.OFF),
         (ShowerFan.OFF, ShowerFan.LOW_HUMIDITY, ShowerFan.OFF),
-        (ShowerFan.OFF, ShowerFan.END_QUIET_PERIOD, ShowerFan.OFF),
+        (ShowerFan.OFF, ShowerFan.END_QUIET, ShowerFan.OFF),
         (ShowerFan.EXTRACTION, ShowerFan.TURNED_OFF, ShowerFan.OFF),
         (ShowerFan.EXTRACTION, ShowerFan.TIMEOUT, ShowerFan.OFF),
         (ShowerFan.EXTRACTION, ShowerFan.HIGH_HUMIDITY, ShowerFan.DRYING),
         (ShowerFan.EXTRACTION, ShowerFan.LOW_HUMIDITY, ShowerFan.EXTRACTION),
         (ShowerFan.EXTRACTION, ShowerFan.TURNED_ON, ShowerFan.EXTRACTION),
-        (ShowerFan.EXTRACTION, ShowerFan.START_QUIET_PERIOD, ShowerFan.QUIET),
-        (ShowerFan.EXTRACTION, ShowerFan.END_QUIET_PERIOD, ShowerFan.EXTRACTION),
+        (ShowerFan.EXTRACTION, ShowerFan.BEGIN_QUIET, ShowerFan.QUIET),
+        (ShowerFan.EXTRACTION, ShowerFan.END_QUIET, ShowerFan.EXTRACTION),
         (ShowerFan.DRYING, ShowerFan.TURNED_OFF, ShowerFan.OFF),
         (ShowerFan.DRYING, ShowerFan.LOW_HUMIDITY, ShowerFan.OFF),
         (ShowerFan.DRYING, ShowerFan.TIMEOUT, ShowerFan.OFF),
-        (ShowerFan.DRYING, ShowerFan.START_QUIET_PERIOD, ShowerFan.QUIET),
+        (ShowerFan.DRYING, ShowerFan.BEGIN_QUIET, ShowerFan.QUIET),
         (ShowerFan.DRYING, ShowerFan.HIGH_HUMIDITY, ShowerFan.DRYING),
         (ShowerFan.DRYING, ShowerFan.TURNED_ON, ShowerFan.DRYING),
-        (ShowerFan.DRYING, ShowerFan.END_QUIET_PERIOD, ShowerFan.DRYING),
-        (ShowerFan.QUIET, ShowerFan.END_QUIET_PERIOD, ShowerFan.OFF),
+        (ShowerFan.DRYING, ShowerFan.END_QUIET, ShowerFan.DRYING),
+        (ShowerFan.QUIET, ShowerFan.END_QUIET, ShowerFan.OFF),
         (ShowerFan.QUIET, ShowerFan.TURNED_ON, ShowerFan.QUIET_EXTRACTION),
         (ShowerFan.QUIET, ShowerFan.TURNED_OFF, ShowerFan.QUIET),
         (ShowerFan.QUIET, ShowerFan.LOW_HUMIDITY, ShowerFan.QUIET),
         (ShowerFan.QUIET, ShowerFan.TIMEOUT, ShowerFan.QUIET),
-        (ShowerFan.QUIET, ShowerFan.START_QUIET_PERIOD, ShowerFan.QUIET),
+        (ShowerFan.QUIET, ShowerFan.BEGIN_QUIET, ShowerFan.QUIET),
         (ShowerFan.QUIET, ShowerFan.HIGH_HUMIDITY, ShowerFan.QUIET),
         (ShowerFan.QUIET_EXTRACTION, ShowerFan.TURNED_OFF, ShowerFan.QUIET),
         (ShowerFan.QUIET_EXTRACTION, ShowerFan.TIMEOUT, ShowerFan.QUIET),
-        (ShowerFan.QUIET_EXTRACTION, ShowerFan.END_QUIET_PERIOD, ShowerFan.OFF),
+        (ShowerFan.QUIET_EXTRACTION, ShowerFan.END_QUIET, ShowerFan.OFF),
         (ShowerFan.QUIET_EXTRACTION, ShowerFan.TURNED_ON, ShowerFan.QUIET_EXTRACTION),
         (
             ShowerFan.QUIET_EXTRACTION,
@@ -265,7 +265,7 @@ def test_restore_state_triggers_start_quiet_period_and_turned_on_when_quiet_peri
         ),
         (
             ShowerFan.QUIET_EXTRACTION,
-            ShowerFan.START_QUIET_PERIOD,
+            ShowerFan.BEGIN_QUIET,
             ShowerFan.QUIET_EXTRACTION,
         ),
         (
@@ -469,12 +469,12 @@ def test_quite_period_schedule_initialised(hass_driver, shower_fan_app: ShowerFa
             mock.call(
                 shower_fan_app.on_quite_time_schedule,
                 QUIET_TIME_FROM,
-                trigger=ShowerFan.START_QUIET_PERIOD,
+                trigger=ShowerFan.BEGIN_QUIET,
             ),
             mock.call(
                 shower_fan_app.on_quite_time_schedule,
                 QUIET_TIME_TO,
-                trigger=ShowerFan.END_QUIET_PERIOD,
+                trigger=ShowerFan.END_QUIET,
             ),
         ]
     )
@@ -490,16 +490,16 @@ def test_quite_period_schedule_triggers_transition(
 
     trigger_spy = mocker.spy(shower_fan_app, "trigger")
 
-    shower_fan_app.on_quite_time_schedule({"trigger": ShowerFan.START_QUIET_PERIOD})
+    shower_fan_app.on_quite_time_schedule({"trigger": ShowerFan.BEGIN_QUIET})
 
     trigger_spy.assert_has_calls(
         [
-            mock.call(ShowerFan.START_QUIET_PERIOD),
+            mock.call(ShowerFan.BEGIN_QUIET),
         ]
     )
 
 
-def test_quite_switch_on_triggers_start_quiet_period_transition(
+def test_quite_switch_on_triggers_begin_quiet_transition(
     hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
 ):
     with hass_driver.setup():
@@ -512,12 +512,12 @@ def test_quite_switch_on_triggers_start_quiet_period_transition(
 
     trigger_spy.assert_has_calls(
         [
-            mock.call(ShowerFan.START_QUIET_PERIOD),
+            mock.call(ShowerFan.BEGIN_QUIET),
         ]
     )
 
 
-def test_quite_switch_off_triggers_end_quiet_period_transition(
+def test_quite_switch_off_triggers_end_quiet_transition(
     hass_driver, shower_fan_app: ShowerFan, mocker: pytest_mock.MockerFixture
 ):
     with hass_driver.setup():
@@ -530,7 +530,7 @@ def test_quite_switch_off_triggers_end_quiet_period_transition(
 
     trigger_spy.assert_has_calls(
         [
-            mock.call(ShowerFan.END_QUIET_PERIOD),
+            mock.call(ShowerFan.END_QUIET),
         ]
     )
 

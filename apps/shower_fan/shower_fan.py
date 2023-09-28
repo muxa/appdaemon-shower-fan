@@ -22,8 +22,8 @@ class ShowerFan(hass.Hass):
     HIGH_HUMIDITY = "high humidity"
     LOW_HUMIDITY = "low humidity"
     TIMEOUT = "timeout"
-    START_QUIET_PERIOD = "start quiet period"
-    END_QUIET_PERIOD = "end quiet period"
+    BEGIN_QUIET = "begin quiet"
+    END_QUIET = "end quiet"
 
     def initialize(self):
         self.reference_humidity_sensor = self.args.get("reference_humidity_sensor")
@@ -50,12 +50,12 @@ class ShowerFan(hass.Hass):
             self.run_daily(
                 self.on_quite_time_schedule,
                 self.quiet_time.time_from,
-                trigger=ShowerFan.START_QUIET_PERIOD,
+                trigger=ShowerFan.BEGIN_QUIET,
             )
             self.run_daily(
                 self.on_quite_time_schedule,
                 self.quiet_time.time_to,
-                trigger=ShowerFan.END_QUIET_PERIOD,
+                trigger=ShowerFan.END_QUIET,
             )
 
         if self.reference_humidity_sensor:
@@ -96,7 +96,7 @@ class ShowerFan(hass.Hass):
         )
 
         if is_quiet_period:
-            self.trigger(ShowerFan.START_QUIET_PERIOD)
+            self.trigger(ShowerFan.BEGIN_QUIET)
             if self.is_on():
                 self.trigger(ShowerFan.TURNED_ON)
         elif self.is_on():
@@ -135,7 +135,7 @@ class ShowerFan(hass.Hass):
                 self.set_extraction()
             elif input == ShowerFan.TURNED_OFF:
                 self.set_off()
-            elif input == ShowerFan.START_QUIET_PERIOD:
+            elif input == ShowerFan.BEGIN_QUIET:
                 self.set_quiet()
             else:
                 self.log_invalid_transition(input)
@@ -145,7 +145,7 @@ class ShowerFan(hass.Hass):
                 self.set_extraction()
             elif input == ShowerFan.HIGH_HUMIDITY:
                 self.set_drying()
-            elif input == ShowerFan.START_QUIET_PERIOD:
+            elif input == ShowerFan.BEGIN_QUIET:
                 self.set_quiet()
             else:
                 self.log_invalid_transition(input)
@@ -157,7 +157,7 @@ class ShowerFan(hass.Hass):
                 self.set_off()
             elif input == ShowerFan.HIGH_HUMIDITY:
                 self.set_drying()
-            elif input == ShowerFan.START_QUIET_PERIOD:
+            elif input == ShowerFan.BEGIN_QUIET:
                 self.set_quiet()
             else:
                 self.log_invalid_transition(input)
@@ -169,7 +169,7 @@ class ShowerFan(hass.Hass):
                 self.set_off()
             elif input == ShowerFan.TIMEOUT:
                 self.set_off()
-            elif input == ShowerFan.START_QUIET_PERIOD:
+            elif input == ShowerFan.BEGIN_QUIET:
                 self.set_quiet()
             else:
                 self.log_invalid_transition(input)
@@ -177,7 +177,7 @@ class ShowerFan(hass.Hass):
         elif self.current_state == ShowerFan.QUIET:
             if input == ShowerFan.TURNED_ON:
                 self.set_quiet_extraction()
-            elif input == ShowerFan.END_QUIET_PERIOD:
+            elif input == ShowerFan.END_QUIET:
                 self.set_off()
             else:
                 self.log_invalid_transition(input)
@@ -187,7 +187,7 @@ class ShowerFan(hass.Hass):
                 self.set_quiet()
             elif input == ShowerFan.TURNED_OFF:
                 self.set_quiet()
-            elif input == ShowerFan.END_QUIET_PERIOD:
+            elif input == ShowerFan.END_QUIET:
                 self.set_off()
             else:
                 self.log_invalid_transition(input)
@@ -266,9 +266,9 @@ class ShowerFan(hass.Hass):
             return
 
         if new == "on":
-            self.trigger(ShowerFan.START_QUIET_PERIOD)
+            self.trigger(ShowerFan.BEGIN_QUIET)
         elif new == "off":
-            self.trigger(ShowerFan.END_QUIET_PERIOD)
+            self.trigger(ShowerFan.END_QUIET)
 
     def _on_fan_state(self, entity, attribute, old, new, kwargs):
         self.log(
